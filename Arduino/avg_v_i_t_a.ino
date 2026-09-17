@@ -1,28 +1,20 @@
-/**
- * SOLAR BOAT SENSOR TELEMETRY
- * PRINTS READINGS IN THIS FORMAT: {voltage}#{current}#{temperature}#{acceleration}\n
- */
-
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BNO055.h>
 #include <utility/imumaths.h>
 
-// --- Configuration Constants ---
 const int VOLTAGE_PIN = A1; 
 const int CURRENT_PIN = A0;
 
 const float CURRENT_SENSITIVITY = 0.020;
 const float CURRENT_OFFSET_V = 0.0;
-const float SYSTEM_VREF = 5.0; // Note: Use 5.0 for standard 5V Arduino, or adjust if using analogReference(INTERNAL)
+const float SYSTEM_VREF = 5.0; 
 
 const int NUM_SAMPLES = 10;
 const unsigned long SAMPLE_DELAY_MS = 50;
 
-// --- Global Objects ---
 Adafruit_BNO055 bno = Adafruit_BNO055(55);
 
-// --- State Variables ---
 int sampleIndex = 0;
 float voltageSamples[NUM_SAMPLES] = {0};
 float currentSamples[NUM_SAMPLES] = {0};
@@ -42,7 +34,7 @@ void setup() {
 }
 
 void loop() {
-  // 1. Gather raw readings
+  // Gather raw readings
   voltageSamples[sampleIndex] = readVoltage();
   currentSamples[sampleIndex] = readCurrent();
   tempSamples[sampleIndex]    = readTemperature();
@@ -50,7 +42,7 @@ void loop() {
 
   sampleIndex++;
 
-  // 2. Process and transmit when the buffer is full (every 10 samples)
+  // Process and transmit when the buffer is full (every 10 samples)
   if (sampleIndex >= NUM_SAMPLES) {
     transmitAveragedData();
     sampleIndex = 0;
@@ -60,15 +52,10 @@ void loop() {
 }
 
 
-// ==========================================
-//              HELPER FUNCTIONS
-// ==========================================
-
 float readVoltage() {
   int rawVal = analogRead(VOLTAGE_PIN);
   
-  // TO-DO: Consider replacing 4.092 and 10 with calculated constants 
-  // based on your actual hardware voltage divider resistor values.
+  // TO-DO: Consider replacing 4.092 and 10 with calculated constants
   float v = rawVal / 4.092;
   return v / 10.0;
 }
@@ -78,7 +65,7 @@ float readCurrent() {
   float voltage = (rawVal / 1024.0) * SYSTEM_VREF;
   float current = (voltage - CURRENT_OFFSET_V) / CURRENT_SENSITIVITY;
  
-  // Clamp negative noise (Ensure this doesn't mask regenerative braking current if applicable)
+  // Clamp negative noise
   return (current < 0.0) ? 0.0 : current;
 }
 
